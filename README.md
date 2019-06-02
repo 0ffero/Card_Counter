@@ -2,7 +2,7 @@
 A simple solution to learn card counting.
 
 <p>
-Built in HTML, using css, js, jquery and php<br/>
+Built in HTML, using css, js, jquery and php (only using php for quickness of development as I know it better than js)<br/>
 Watched 21 last night, so decided to write a program to allow people to learn how to do it.
 </p>
 <p>
