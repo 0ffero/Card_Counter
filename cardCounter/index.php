@@ -20,10 +20,11 @@ $cardNameString = implode(",", $cardNameArray);
     body { font-size: 18px; background-color: black; color: white; }
     input { font-size: 18px; width: 39px; background-color: #902424; border: blue; color: white; }
     #container { width: 1800px; }
-    #card { background-size: contain; background-image: url("images/00.png"); width: <?= round(691*0.3) ?>px; height: <?= round(1056*0.3) ?>px; float: left; }
+    #card { background-size: contain; background-image: url("images/00.png"); width: <?= round(691*0.35) ?>px; height: <?= round(1056*0.35) ?>px; float: left; }
     #outputContainer, #strategy, #count, #offset, #showCardsCount, #go, #selectedSpeed {  float: left; }
     #strategy, #count, #offset, #showCardsCount, #go, #selectedSpeed { margin: 5px 15px; padding: 5px 15px; width: 200px; text-align: center; background-color: #902424; border: blue; color: white; text-shadow: 1px 1px 1px black; border-radius: 6px; box-shadow: 0px 0px 5px red; }
     #count, #offset, #showCardsCount, #go, #selectedSpeed { clear: left; }
+    .countVar, .offsetVar, .hideme { width: 100px; padding: 0px; margin: 0px; text-align: right; display: inline-block; cursor: pointer; }
     .speed { min-width: 36px; max-width: 36px; width: 36px; display: inline-block; text-align: right; margin-right: 1px; }
     
     /* Over-rides */
@@ -41,8 +42,8 @@ $cardNameString = implode(",", $cardNameArray);
             <div id="strategy"><?=$strat?></div>
             <div id="showCardsCount">Show <input id="cardMax" type="number" min="1" max="52" value="18" /> cards</div>
             <div id="selectedSpeed">Selected speed: <span class="speed">2000</span>ms <span class="prevSpeed">-</span> <span class="nextSpeed">+</span></div>
-            <div id="offset">0</div>
-            <div id="count">0</div>
+            <div id="offset"><span class="offsetVar">0</span><span class="hideme" data-var="offsetVar">◄</span></div>
+            <div id="count"><span class="countVar">0</span><span class="hideme" data-var="countVar">◄</span></div>
             <div id="go">Begin</div>
         </div>
     </div>
@@ -82,9 +83,25 @@ $cardNameString = implode(",", $cardNameArray);
             }
         })
 
+        $('.hideme').on( 'click', function() {
+            whatAmIHiding = $(this).data('var');
+            currentIcon = $(this).html();
+            if (currentIcon == "◄") {
+                // hide whatAmIHiding
+                $('.' + whatAmIHiding).css({ 'color': '#902424', 'text-shadow': '0px 0px 0px #902424' })
+                $(this).html('►');
+            } else {
+                // show whatAmIHiding
+                $('.' + whatAmIHiding).css({ 'color': 'white', 'text-shadow': '0px 0px 0px black' })
+                $(this).html('◄');
+            }
+        })
+
     })
 
     function begin() {
+        //reset visible variables
+        $('.countVar, .offsetVar').html(0);
         seconds = 5;
         initialTimeout = seconds * 1000; // 5 seconds before first card is shown
         console.log("Starting in " + seconds + "s");
@@ -111,11 +128,11 @@ $cardNameString = implode(",", $cardNameArray);
                 currentCardArray = cardsArray[y].split('-');
                 currentCard = parseInt(currentCardArray[0]);
                 if (selectedStrategyName!='Red 7') {
-                    cardCount = parseInt($('#count').html());
+                    cardCount = parseInt($('.countVar').html());
                     cardCountOffset = selectedStrategy[(currentCard-1)];
                     cardCount = cardCount + cardCountOffset;
-                    $('#count').html(cardCount);
-                    $('#offset').html(cardCountOffset);
+                    $('.countVar').html(cardCount);
+                    $('.offsetVar').html(cardCountOffset);
                 }
                 if (currentCard>10 || currentCard == 1) {
                     switch (currentCard) {
