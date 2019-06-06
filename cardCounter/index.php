@@ -1,4 +1,20 @@
-<?php
+<!--
+   ******************************************************
+   SOURCE CODE BY STEVEN FREEMAN (OFFERO, 04) © June 2019
+
+   IF YOU WANT TO USE ANY OF THIS CODE JUST MENTION MY 
+   NAME ANYWHERE IN THE ROOT FILE OF YOUR APP
+
+   THIS APP WAS BUILT FOR MY OWN PERSONAL USE ON MY OWN
+   PERSONAL PC, WHICH IS PRETTY POWERFUL AND IN GENERAL
+   ILL USE ALL MY PROCESSING POWER TO DO A JOB. IN SOME
+   APPS THIS MAY CAUSE A PROBLEM ON YOUR MACHINE. YOU'VE
+   BEEN WARNED :)
+
+   NO WARRANTY GIVEN. IF YOU BREAK YOU MACHINE USING MY
+   CODE THAT'S YOUR FAULT, NOT MINE
+   ******************************************************
+//--><?PHP
 // SET UP VARS
 $suitArray = array("C", "S", "H", "D");
 $strat = 'Hi-Lo';
@@ -271,7 +287,7 @@ $cardNameString = implode(",", $cardNameArray);
             } else {                                                    // staying
                 console.log("Staying"); showFinalCount(player);
             }
-        }, 1000)
+        }, 1500)
     }
     function hitMe(player, timeOut=500) {
         cards = $('#player'+player+' .card').length;
@@ -357,6 +373,11 @@ $cardNameString = implode(",", $cardNameArray);
     }
     function nextPlayer(player) {
         player++;
+        $('.player').each( function() { 
+            thisID = $(this).attr('id');
+            $('#'+thisID+' .playerTitle').css('background-color', '#48707E');
+        });
+        $('#player'+player+' .playerTitle').css('background-color', '#902424');
         if (parseInt($('#vars').data('humanplayer')!=player)) { $('#option').fadeOut(333); }
         $('#vars').data('currentplayer', player)
         // position the "hand" options
