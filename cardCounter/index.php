@@ -64,19 +64,19 @@ $cardNameString = implode(",", $cardNameArray);
         </div>
     
         <div id="playerContainer">
-            <div id="player0" class="player" data-hand="" data-handcount="0" data-acecount="0">
+            <div id="player0" class="player" data-hand="" data-handcount="0">
                 <div class="playerTitle">PLAYER 1</div>
                 <div class="card1 card" data-count=""></div>
             </div>
-            <div id="player1" class="player" data-hand="" data-handcount="0" data-acecount="0">
+            <div id="player1" class="player" data-hand="" data-handcount="0">
                 <div class="playerTitle">PLAYER 2</div>
                 <div class="card1 card" data-count=""></div>
             </div>
-            <div id="player2" class="player" data-hand="" data-handcount="0" data-acecount="0">
+            <div id="player2" class="player" data-hand="" data-handcount="0">
                 <div class="playerTitle">PLAYER 3</div>
                 <div class="card1 card" data-count=""></div>
             </div>
-            <div id="player3" class="player" data-hand="" data-handcount="0" data-acecount="0">
+            <div id="player3" class="player" data-hand="" data-handcount="0">
                 <div class="playerTitle">DEALER</div>
                 <div class="card1 card" data-count=""></div>
             </div>
@@ -202,9 +202,10 @@ $cardNameString = implode(",", $cardNameArray);
                     $('.countVar').html(cardCount);
                     $('.offsetVar').html(cardCountOffset);
                 }
+                aceFound = false;
                 if (currentCard>10 || currentCard == 1) {
                     switch (currentCard) {
-                        case  1: currentCard = "A"; handCount=11;  if (passedCounter >= showCountMax) { aceCount = parseInt($('#player'+player).data('acecount')); aceCount++; $('#player'+player).data('acecount', aceCount) }; break;
+                        case  1: currentCard = "A"; handCount = 11;  if (passedCounter >= showCountMax) { aceFound=true; }; break;
                         case 11: currentCard = "J"; handCount = 10; break;
                         case 12: currentCard = "Q"; handCount = 10; break;
                         case 13: currentCard = "K"; handCount = 10; break;
@@ -224,17 +225,18 @@ $cardNameString = implode(",", $cardNameArray);
                     currentPosition = passedCounter - showCountMax;
                     if (currentPosition == 0) { $('.card').css('border', 'none'); }
                     if (currentPosition%2==0 && currentPosition>0) { player++; }
-                    
-                    // UPDATE PLAYERS HAND COUNT
-                    currentHandCount = parseInt($('#player' + player).data('handcount'));
-                    newHandCount = currentHandCount + handCount;
-                    if (newHandCount>21 && aceCount>0) {
-                        // player current calculation is greater than 21, but they have aces
-                        while (newHandCount>21 && aceCount>0) {
-                            newHandCount -= 10;
-                            aceCount--;
-                        }
+
+                    // GET REAL COUNT!
+                    if ($('#player'+player+' .card1').length==1) {
+                        currentHandCount = $('#player'+player+' .card1').data('count');
+                        aceFound = currentHandCount == 11 ? true : false;
+                    } else {
+                        currentHandCount = 0;
                     }
+
+                    // UPDATE PLAYERS HAND COUNT
+                    newHandCount = currentHandCount + handCount;
+                    if (handCount>21 && aceFound) { handCount -=10; }
                     $('#player' + player).data('handcount', newHandCount);
                     
                     // build card if it doesn't exist card
@@ -246,7 +248,7 @@ $cardNameString = implode(",", $cardNameArray);
                     currentHand = $('#player' + player).data('hand');
                     if (currentHand.length==0) { currentHand = image; } else { currentHand += "," + image }
                     $('#player' + player).data('hand', currentHand);
-                    $('#player' + player + ' .card' + (currentPosition%2 +1)).css({ 'background-image': 'url("images/card' + image + '.png")', 'margin-left': -cardPositionOffset, 'border': '1px solid black' });
+                    $('#player' + player + ' .card' + (currentPosition%2 +1)).css({ 'background-image': 'url("images/card' + image + '.png")', 'margin-left': -cardPositionOffset, 'border': '1px solid black' }).data('count', handCount);
 
                     if (passedCounter==showCountMax+cardsToDeal-1) {
                         dealtCards = $('#vars').data('usedcards');
@@ -290,7 +292,7 @@ $cardNameString = implode(",", $cardNameArray);
             cardSuit = playersCardArray[1];
             if (cardValue>10 || cardValue == 1) {
                 switch (cardValue) {
-                    case  1: cardValue = "A"; aceCount = parseInt($('#player'+player).data('acecount')); handCount = 11; aceCount++; $('#player'+player).data('acecount', aceCount); break;
+                    case  1: cardValue = "A"; handCount = 11; break;
                     case 11: cardValue = "J"; handCount = 10; break;
                     case 12: cardValue = "Q"; handCount = 10; break;
                     case 13: cardValue = "K"; handCount = 10; break;
@@ -309,12 +311,18 @@ $cardNameString = implode(",", $cardNameArray);
             $('#player'+player+' .card'+(cards+1)).css({ 'margin-left': leftOffset + 'px', 'background-image': 'url("images/card' + image + '.png")', 'border': '1px solid black' })
 
             // figure out if the player is bust or not
-            totalCount = $('#player'+player).data('handcount') + handCount;
-            if (totalCount>21 && aceCount>0) {
+            playersAceCount=0; totalCount=0;
+            $('#player'+player+' .card').each( function() {
+                thisCount = $(this).data('count');
+                if (thisCount==11) { playersAceCount++; }
+                totalCount += thisCount;
+            })
+
+            if (playersAceCount>0 && totalCount>21) {
                 // player current calculation is greater than 21, but they have aces
-                while (totalCount>21 && aceCount>0) {
+                while (playersAceCount>0 && totalCount>21) {
                     totalCount -= 10;
-                    aceCount--;
+                    playersAceCount--;
                 }
             }
             $('#player'+player).data('handcount', totalCount);
