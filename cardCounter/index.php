@@ -236,7 +236,7 @@ $cardNameString = implode(",", $cardNameArray);
 
                     // UPDATE PLAYERS HAND COUNT
                     newHandCount = currentHandCount + handCount;
-                    if (handCount>21 && aceFound) { handCount -=10; }
+                    if (newHandCount>21 && aceFound) { newHandCount -=10; }
                     $('#player' + player).data('handcount', newHandCount);
                     
                     // build card if it doesn't exist card
