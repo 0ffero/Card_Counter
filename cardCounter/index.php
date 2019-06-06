@@ -154,7 +154,6 @@ $cardNameString = implode(",", $cardNameArray);
         })
         $('#stay').on( 'click', function() {
             player = parseInt($('#vars').data('currentplayer'));
-            $('#options').fadeOut("fast");
             showFinalCount(player);
         })
 
@@ -263,11 +262,14 @@ $cardNameString = implode(",", $cardNameArray);
     }
 
     function contemplateHand(player=0) {
-        if ($('#player'+player).data('handcount')<17) {             // ask for another card
-            console.log("Asking for another card"); hitMe(player);
-        } else {                                                    // staying
-            console.log("Staying"); showFinalCount(player);
-        }
+        //selectedSpeed = parseInt($('#vars').data('selectedspeed'));
+        setTimeout( function() {
+            if ($('#player'+player).data('handcount')<17) {             // ask for another card
+                console.log("Asking for another card"); hitMe(player);
+            } else {                                                    // staying
+                console.log("Staying"); showFinalCount(player);
+            }
+        }, 1000)
     }
     function hitMe(player, timeOut=500) {
         cards = $('#player'+player+' .card').length;
@@ -354,7 +356,7 @@ $cardNameString = implode(",", $cardNameArray);
         if ($('#vars').data('humanplayer')==player) {
             console.log("Users Turn"); $('#options').fadeIn("slow");
         } else {
-            console.log("Computers Turn..."); contemplateHand(player);
+            console.log("Computers Turn..."); $('#options').fadeOut("slow"); contemplateHand(player);
         }
     }
     function checkForWinner() {
@@ -364,8 +366,9 @@ $cardNameString = implode(",", $cardNameArray);
             thisID = $(this).attr('id');
             if (thisID != "player3") {
                 handCount = $(this).data('handcount');
+                offset = ($('#'+thisID + ' .card').length - 1) *27;
                 if (handCount >= playerDealerHandCount && handCount < 22) { bgCol = '#00B22DB3'; text="WIN"; } else { bgCol='#8C0000B3'; text="LOSE"; }
-                $('#'+thisID+' .count').css({ 'background-color': bgCol, 'font-size': '32px', 'margin-top': "55px" }).html(text);
+                $('#'+thisID+' .count').css({ 'background-color': bgCol, 'font-size': '32px', 'margin-top': "55px", 'margin-left': offset + 'px' }).html(text);
             }
         })
     }
