@@ -139,7 +139,7 @@
     $(document).ready(function(){
         // INIT
         buildBank();
-        getNames = $.get( './data/names.json', function( data ) {
+        getNames = $.get( 'data/names.json', function( data ) {
             randomNameArray = [];
             maleFaces = $('#vars').data('malefaces').split(',');
             femaleFaces = $('#vars').data('femalefaces').split(',');
