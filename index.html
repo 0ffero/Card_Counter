@@ -1,0 +1,683 @@
+<!--
+   ******************************************************
+   SOURCE CODE BY STEVEN FREEMAN (OFFERO, 04) © June 2019
+
+   IF YOU WANT TO USE ANY OF THIS CODE JUST MENTION MY 
+   NAME ANYWHERE IN THE ROOT FILE OF YOUR APP
+
+   THIS APP WAS BUILT FOR MY OWN PERSONAL USE ON MY OWN
+   PERSONAL PC, WHICH IS PRETTY POWERFUL AND IN GENERAL
+   ILL USE ALL MY PROCESSING POWER TO DO A JOB. IN SOME
+   APPS THIS MAY CAUSE A PROBLEM ON YOUR MACHINE. YOU'VE
+   BEEN WARNED :)
+
+   NO WARRANTY GIVEN. IF YOU BREAK YOU MACHINE USING MY
+   CODE THAT'S YOUR FAULT, NOT MINE.
+
+   COMPLETE: 
+        MULTIPLE DECKS  - REWROTE PHP CARD ARRAY BUILDER
+                          IN JS
+        CARD COUNTER SIMULATION - WITH HIDABLE STATS
+        FULL GAME IS PLAYABLE
+        ADD FACES TO PLAYERS
+    
+   TODO:
+        ALLOW USERS TO SPLIT PAIRS
+        IMPLEMENT BETTING
+
+    NOTES:
+        PLAYER POSITION HAS BEEN SET TO STATIC WHILST
+            IMPLEMENTING BETTING AND CPU EMOTIONS
+
+   ******************************************************
+//-->
+<html lang="en">
+<head>
+<meta charset="utf-16">
+<script type="text/javascript" src="js/jquery331.js"></script>
+<script type="text/javascript" src="js/commonFunctions.js"></script>
+
+<style type="text/css">
+    body { font-size: 18px; background-color: black; color: white; font-family: sans-serif; }
+    input { font-size: 18px; width: 39px; background-color: #902424; border: blue; color: white; }
+    #container { width: 1900px; }
+    #card { background-size: contain; width: calc(691px*0.3); height: calc(1056px*0.3); float: left; }
+    #outputContainer, #strategy, #count, #offset, #showCardsCount, #selectedSpeed, #decksCount, #gameOptions, #playerOptions, .button {  float: left; }
+    #strategy, #count, #offset, #showCardsCount, #selectedSpeed, #decksCount, #gameOptions, #playerOptions, .playerTitle, .button { margin: 5px 15px; padding: 5px 15px; width: 200px; text-align: center; background-color: #902424; border: blue; color: white; text-shadow: 1px 1px 1px black; border-radius: 6px; box-shadow: 0px 0px 5px red; }
+    #count, #offset, #showCardsCount, #go, #nextHand, #selectedSpeed, #decksCount, #gameOptions, #playerOptions, .playerTitle { clear: left; }
+    #decks { width: 30px; }
+    .prevSpeed, .nextSpeed { cursor: pointer; }
+    #playerNumber, #totalPlayers { margin-left: 15px; width: 26px; }
+    #nextHand { background-color: #3ad153; color: white; }
+    #nextHand:hover { background-color: yellow; }
+    .countVar, .offsetVar, .hideme { width: 100px; padding: 0px; margin: 0px; text-align: right; display: inline-block; cursor: pointer; }
+    .speed { min-width: 36px; max-width: 36px; width: 36px; display: inline-block; text-align: right; margin-right: 1px; }
+    #playerContainer, #player0, #player1, #player2, #player3, .card1, .card2, .card3, .card4, .card5 { float: left; }
+        #player0, #player1, #player2, #player3 {  padding: 0px; margin: 5px 10px; }
+        .balanceContainer { color: yellow; float: left; margin-top: -36px; margin-left: 10px; font-weight: bold; text-shadow: 2px 2px 3px black; }
+        .face { font-size: 36px; clear: left; float: left; position: absolute; margin-top: -53px; margin-left: 270px; }
+        .card { background-size: contain; width: calc(691px*0.185); height: calc(1056px*0.185); background-color: black; border-radius: 10px; border: 1px dashed white; position: relative; }
+        .count { padding: 15px 15px; font-size: 80px; color: white; text-shadow: 1px 1px 1px black; float: left; position: absolute; margin-left: 27px; margin-top: 25px; transform: rotate(-12deg); }
+    
+    /* Over-rides */
+    #strategy, #gameOptions { background-color: #48707E; border: 1px solid white; box-shadow: 1px 1px 1px #575656; }
+    .button { font-family: monospace; box-shadow: inset 0px 0px 14px 2px #000000; border: 1px solid white; background-color: #455957; color: #A2BCC6; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; font-weight: bold; }
+    .button:hover { background-color: #EFEFEF; }
+    .small { width: 60; margin-left: 10px; margin-right: 5px; }
+
+    .playerTitle { background-color: #48707E; width: 290px; border: 1px solid white; margin: 0px; margin-bottom: 10px; box-shadow: none; }
+    #player0 .playerTitle { background-color: #902424; }
+    .player { max-width: 320px; }
+
+    body { -webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;}
+    #options { display: none; }
+
+
+    #bankContainer { width: 230px; height: 46px; background-color: #006DD9; color: yellow; font-size: 40px; border-radius: 6px; float: left; clear: left; margin-left: 15px; margin-top: 10px; text-shadow: 2px 2px 7px black; display: none; border: 1px solid white; }
+        .bankIcon { float: left; margin-top: -18px; font-size: 56px; }
+        .usersBet { float: right; margin-right: 10px; }
+        .betMods { float: right; margin-left: 5px; }
+        .increaseBet, .decreaseBet { color: white; font-size: 16px; float: left; cursor: pointer; }
+        .increaseBet:hover, .decreaseBet:hover { color: #2fee06; }
+        .increaseBet { margin-top: 2px; }
+        .decreaseBet { margin-top: -24px; }
+        .playerFace { float: left; margin-top: -1px; margin-right: 10px; font-size: 32px; }
+</style>
+</head>
+
+<body>
+    <div id="container">
+        <div id="card"></div>
+        <div id="outputContainer">
+            <div id="strategy">Strategy: <span class="strat"></span></div>
+            <div id="decksCount">Decks <input id="decks" type="number" min="1" max="8" value="4" /></div>
+            <div id="showCardsCount">Show <input id="cardMax" type="number" min="1" max="32" value="6" /> cards</div>
+            <div id="selectedSpeed">Deal speed: <span class="speed">250</span>ms <span class="prevSpeed">-</span> <span class="nextSpeed">+</span></div>
+            <div id="offset"><span class="offsetVar">0</span><span class="hideme" data-var="offsetVar">◄</span></div>
+            <div id="count"><span class="countVar">0</span><span class="hideme" data-var="countVar">◄</span></div>
+            <div id="gameOptions">Game Options</div>
+            <div id="playerOptions">Player <input id="playerNumber" type="number" min="1" max="3" value="1" readonly /> of <input id="totalPlayers" type="number" min="1" max="3" value="3" readonly /></div>
+            <div id="go" class="button">Begin</div>
+            <div id="bankContainer"><span class="bankIcon"></span><span class="usersBet"><span class="playerFace"></span><span class="currencyType">$</span><span class="playersBet">5</span><span class="betMods"><span class="increaseBet"></span><br/><span class="decreaseBet"></span></span></div>
+        </div>
+    
+        <div id="playerContainer">
+            <div id="player0" class="player" data-hand="" data-handcount="0">
+                <div class="playerTitle">PLAYER 1</div>
+                <div class="balanceContainer" data-total="300" data-lostamount="" data-wonamount="" data-currentbet="0">$<span class="balance">300</span></div>
+                <div class="face">😐</div>
+                <div class="card1 card" data-count=""></div>
+            </div>
+            <div id="player1" class="player" data-hand="" data-handcount="0">
+                <div class="playerTitle">PLAYER 2</div>
+                <div class="balanceContainer" data-streaktype="" data-streaklength="0" data-currentbet="5">$<span class="balance">300</span></div>
+                <div class="face">😐</div>
+                <div class="card1 card" data-count=""></div>
+            </div>
+            <div id="player2" class="player" data-hand="" data-handcount="0">
+                <div class="playerTitle">PLAYER 3</div>
+                <div class="balanceContainer" data-streaktype="" data-streaklength="0" data-currentbet="5">$<span class="balance">300</span></div>
+                <div class="face">😐</div>
+                <div class="card1 card" data-count=""></div>
+            </div>
+            <div id="player3" class="player" data-hand="" data-handcount="0">
+                <div class="playerTitle">DEALER</div>
+                <div class="balanceContainer" data-streaktype="" data-streaklength="0" data-currentbet="0">$<span class="balance">∞</span></div>
+                <div class="face">😐</div>
+                <div class="card1 card" data-count=""></div>
+            </div>
+            <div id="options">
+                <div id="hitMe" class="small button">HIT</div><div id="split" class="small button">SPLIT</div><div id="stay" class="small button">STAND</div>
+            </div>
+        </div>
+    </div>
+    <div id="vars" data-strat="Hi-Lo" data-suits="C,S,H,D" data-introanimationrunning=true data-currenthighscore="0" data-dealerscore="0" data-dealerbust="no" data-currentplayer="0" data-humanplayer="" data-cards="" data-cardsleft="" data-usedcards="" data-show="3" data-timers="3000,2000,1000,750,500,333,250" data-selectedspeed="250" data-emotion_blackjack="😍" data-emotion_bust="😫" data-emotion_confident="😏" data-emotion_loser="😣" data-emotion_smile="🙂" data-emotion_uncertain="😐" data-emotion_winner="😃" data-emotion_worried="😕" data-malefaces="👦,👨,👱,🧔,👲,👳,👴,👹,👼,👿,💀,🐙,👽" data-femalefaces="👧,👩,👸,👵" data-moneytypes="💰,💲" data-warnings="🔞,📵" data-thinking="💭" data-atm="🏧" data-arrows="🡅,🡇" data-handsdealt="0"></div>
+    <div id="images"></div>
+    <audio id="newCard" src='sounds/deal.m4a'></audio>
+    <audio id="shuffleDeck" src='sounds/shuffle.m4a'></audio>
+</body>
+<script type="text/javascript">
+    $(document).ready(function(){
+        // INIT
+        buildBank();
+        getNames = $.get( 'data/names.json', function( data ) {
+            randomNameArray = [];
+            maleFaces = $('#vars').data('malefaces').split(',');
+            femaleFaces = $('#vars').data('femalefaces').split(',');
+            shuffleArray(maleFaces); shuffleArray(femaleFaces);
+
+            for (i=0; i<3; i++) { // get random names for CPU players
+                maleOrFemale = Math.round(Math.random());
+                randomName = maleOrFemale == 0 ? data["boynames"][Math.round(Math.random()*(data["boynames"].length-1))] : data["girlnames"][Math.round(Math.random()*(data["girlnames"].length-1))];
+                faceForPlayer = maleOrFemale == 0 ? maleFaces.shift() : femaleFaces.shift();
+                randomNameArray.push(faceForPlayer + " " + randomName);
+            }
+            for (i=0; i<10; i++) {
+                shuffleArray(randomNameArray);
+            }
+            $(randomNameArray).each( function( index, playerName ) { if (index==2) { playerName+=" (dealer)"; } $('#player' + (index+1) + ' .playerTitle').html(playerName); })
+        })
+        getCards = $.get( 'data/cards.json', function( data) {
+            $.each(data, function( key, value) {
+                completeBase64 = fixBase64FileData(value);
+                $('#images').attr('data-'+key.replace('.png',''), "data:image/png;base64," + completeBase64);
+            })
+            card00 = $('#images').data('card00');
+            $('#card').css("background-image", 'url("' + card00 + '")' )
+        })
+        doUIStuff();
+        maxShow = parseInt($('#vars').data('show'));
+        strat = $('#vars').data('strat');
+        $('.strat').html(strat);
+        $('#cardMax').attr('value', maxShow);
+        $('#outputContainer').on( 'click', '#go', begin )
+
+        $('#cardMax').on( 'change', function() {
+            cardMaxValue = parseInt($('#cardMax').val());
+            $('#vars').data('show', cardMaxValue);
+        })
+
+        $('#selectedSpeed').on( 'click', '.prevSpeed', function() {
+            currentSpeed = parseInt($('.speed').html());
+            if (currentSpeed != 250) {
+                speedArray = $('#vars').data('timers').split(',');
+                $(speedArray).each( function( index, value ) {
+                    thisSpeed = parseInt(value);
+                    newSpeed = 0;
+                    if (thisSpeed==currentSpeed && newSpeed==0) { newSpeed = speedArray[index+1]; $('.speed').html(newSpeed); $('#vars').data('selectedspeed', newSpeed); }
+                })
+            }
+        })
+        $('#selectedSpeed').on( 'click', '.nextSpeed', function() {
+            currentSpeed = parseInt($('.speed').html());
+            if (currentSpeed != 3000) {
+                speedArray = $('#vars').data('timers').split(',');
+                $(speedArray).each( function( index, value ) {
+                    thisSpeed = parseInt(value);
+                    newSpeed = 0;
+                    if (thisSpeed==currentSpeed && newSpeed==0) { newSpeed = speedArray[index-1]; $('.speed').html(newSpeed); $('#vars').data('selectedspeed', newSpeed); }
+                })
+            }
+        })
+
+        $('.increaseBet').on( 'click', function() {
+            changeBet("increase");
+        })
+        $('.decreaseBet').on( 'click', function() {
+            changeBet("decrease");
+        })
+
+        $('.hideme').on( 'click', function() {
+            whatAmIHiding = $(this).data('var');
+            currentIcon = $(this).html();
+            if (currentIcon == "◄") {
+                // hide whatAmIHiding
+                $('.' + whatAmIHiding).css({ 'color': '#902424', 'text-shadow': '0px 0px 0px #902424' })
+                $(this).html('►');
+            } else {
+                // show whatAmIHiding
+                $('.' + whatAmIHiding).css({ 'color': 'white', 'text-shadow': '0px 0px 0px black' })
+                $(this).html('◄');
+            }
+        })
+
+        $('#playerOptions').on( 'click', '#playerNumber', function() {
+            playerNumber = parseInt($('#playerNumber').val());
+            totalPlayers = parseInt($('#totalPlayers').val());
+            if (playerNumber > totalPlayers) { $('#totalPlayers').val(playerNumber); }
+        })
+        $('#playerOptions').on( 'click', '#totalPlayers', function() {
+            playerNumber = parseInt($('#playerNumber').val());
+            totalPlayers = parseInt($('#totalPlayers').val());
+            if (totalPlayers < playerNumber) { $('#playerNumber').val(totalPlayers); }
+        })
+
+        $('#hitMe').on( 'click', function() {
+            player = $('#vars').data('currentplayer');
+            hitMe(player);
+        })
+        $('#stay').on( 'click', function() {
+            player = parseInt($('#vars').data('currentplayer'));
+            showFinalCount(player);
+        })
+        $('#outputContainer').on( 'click', '#nextHand', function() {
+            newHand();
+        })
+        
+        // stop the user being able to type into the option boxes whilst leaving the increase/descrease buttons enabled
+        $('#cardMax, #playerNumber, #totalPlayers').on( 'keydown', function(e) { e.preventDefault(); })
+    })
+
+    function begin() {
+        // hide options that arent needed
+        $('#showCardsCount, #decksCount, #gameOptions, #playerOptions').fadeOut("fast", function() { $('#bankContainer').fadeIn("fast") })
+        //reset visible variables
+        $('.countVar, .offsetVar').html(0);
+        // BUILD THE DECK ... IM GONNA HAVE TO FUNCTION THE SHIT OUT OF THIS
+        buildDeck();
+
+        seconds = 3;
+        initialTimeout = seconds * 1000; // x seconds before first card is shown
+        //console.log("Starting in " + seconds + "s");
+
+        strategies = {
+            'Hi-Lo':     [ 1,1,1,1,1,1,0,0,0,-1,-1,-1,-1 ],
+            'Hi-Opt I':  [ 0,0,1,1,1,1,0,0,0,-1,-1,-1,-1 ],
+            'Hi-Opt II': [ 0,1,1,2,2,1,1,0,0,-2,-2,-2,-2 ],
+            'KO':        [ -1,1,1,1,1,1,1,0,0,-1,-1,-1,-1 ],
+            'Omega II':  [ 0,1,1,2,2,2,1,0,-1,-2,-2,-2,-2 ],
+            'Red 7':     [ -1,1,1,1,1,1,0x1,0,0,-2,-2,-2,-2 ],
+            'Halves':    [ -1,0.5,1,1,1.5,1,0.5,0,-0.5,-1,-1,-1,-1 ],
+            'Zen Count': [ -1,1,1,2,2,2,1,0,0,-2,-2,-2,-2 ]
+        }
+        selectedStrategyName = $('#vars').data('strat');
+        selectedStrategy = strategies[selectedStrategyName];
+        selectedSpeed = parseInt($('#vars').data("selectedspeed"));
+        showCountMax = parseInt($('#vars').data('show'));
+        cardsArray = $('#vars').data('cards').split(',');
+        playerTotal = parseInt($('#totalPlayers').val());
+        playerNumber = parseInt($('#playerNumber').val())-1; $('#vars').data('humanplayer', playerNumber);
+        $('#go').hide();
+        
+        for (counter=0; counter<showCountMax; counter++) {
+            timeOut = initialTimeout + (counter * selectedSpeed);
+            player = 0; 
+            setTimeout( function(passedCounter) {
+                currentCardArray = cardsArray[passedCounter].split('-');
+                currentCard = parseInt(currentCardArray[0]);
+                if (selectedStrategyName!='Red 7') {
+                    // SHOW THE OFFSET TO USER
+                    cardCount = parseInt($('.countVar').html());
+                    cardCountOffset = selectedStrategy[(currentCard-1)];
+                    cardCount = cardCount + cardCountOffset;
+                    $('.countVar').html(cardCount);
+                    $('.offsetVar').html(cardCountOffset);
+                }
+                aceFound = false;
+                if (currentCard>10 || currentCard == 1) {
+                    switch (currentCard) {
+                        case  1: currentCard = "A"; handCount = 11;  if (passedCounter >= showCountMax) { aceFound=true; }; break;
+                        case 11: currentCard = "J"; handCount = 10; break;
+                        case 12: currentCard = "Q"; handCount = 10; break;
+                        case 13: currentCard = "K"; handCount = 10; break;
+                    }
+                } else {
+                    handCount = currentCard;
+                }
+
+                suit = currentCardArray[1];
+                image = currentCard + suit;
+                usedCards = $('#vars').data('usedcards') + ',' + cardsArray[passedCounter];
+                $('#vars').data('usedcards', usedCards);
+
+                if (passedCounter<showCountMax) {                                                   // DEALING OUT CARDS TO DECK FOR COUNTING
+                    cardImg = $('#images').data('card'+image.toLowerCase());
+                    $('#card').css('background-image', 'url("' + cardImg + '")');
+                }
+                
+                if (passedCounter==showCountMax-1) {
+                    dealtCards = $('#vars').data('usedcards');
+                    dealtCards = dealtCards.substring(1,dealtCards.length) + ",";
+                    cardsLeft = $('#vars').data('cards').replace(dealtCards, ''); 
+                    $('#vars').data('cardsleft', cardsLeft);
+                    setTimeout( function() {
+                        $("#go").replaceWith('<div id="nextHand" class="button">Deal Hand</div>').css('background-color', '#24812f').fadeIn("slow");
+                        humanDefaultBet();
+                        nextPlayer(-1); 
+                    }, 1000)
+                }
+            }, timeOut, counter)
+        }
+    }
+
+    function buildBank() {
+        moneyIcons = $('#vars').data('moneytypes').split(',');
+        bankIcon = moneyIcons[0]; currencyIcon = moneyIcons[1];
+        $('.bankIcon').html(bankIcon);
+    }
+    function buildDeck() {
+        $('#shuffleDeck').get(0).play();
+        cardNameString = '';
+        cardNameArray = [];
+        decksCount = parseInt($('#decks').val());
+        suitsArray = $('#vars').data('suits').split(',');
+        for (decks=0; decks<decksCount; decks++) {
+            for (suits=1; suits<=4; suits++) {
+                currentSuit = suitsArray[suits-1];
+                for(cards=1; cards<=13; cards++) {
+                    cardNameArray.push(cards + '-' + currentSuit); 
+                }
+            }
+        }
+        for (i=0; i<10; i++) {
+            shuffleArray(cardNameArray);
+        }
+        cardNameString = cardNameArray.join(',');
+        $('#vars').data('cards', cardNameString);
+    }
+    function changeBet(changeType) {
+        humanID = parseInt($('#vars').data('humanplayer'));
+        playersBalance = parseInt($('#player'+humanID+' .balance').html());
+        currentBet = parseInt($('.playersBet').html());
+        if (playersBalance>0) {
+            if (changeType=="decrease") { currentBet-=5; playersBalance+=5; } else { currentBet+=5; playersBalance-=5; }
+            if (currentBet >0 && currentBet<100) { $('#player'+humanID+' .balanceContainer').data('currentbet', currentBet).data('total', playersBalance); $('.playersBet').html(currentBet); $('#player'+humanID+' .balance').html(playersBalance); }
+        }
+    }
+    function checkForWinner() {
+        dealerHandCount = $('#player3').data('handcount');
+        $('.player').each( function() {
+            thisID = $(this).attr('id');
+            if (thisID != "player3") {
+                handCount = $(this).data('handcount');
+                offset = ($('#'+thisID + ' .card').length - 1) * 27;
+                // CHECK FOR WIN TYPES
+                if (handCount > dealerHandCount && handCount < 22) {
+                    //console.log("Winner! " + thisID + " gets their bet * 2 back");
+                    $('#'+thisID+' .face').html('😃');
+                    bgCol = '#00B22DB3'; text="WIN";
+                    setBalance(thisID,'WIN');
+                } else if (handCount==dealerHandCount) {
+                    //console.log(thisID + " Gets Their Money Back");
+                    bgCol = '#00B22DB3'; text="TIED";
+                    $('#'+thisID+' .face').html('😐');
+                    setBalance(thisID,'DRAW');
+                } else {
+                    //console.log(thisID + " Lost");
+                    $('#'+thisID+' .face').html('😣');
+                    bgCol='#8C0000B3'; text="LOSE";
+                }
+                $('#'+thisID+' .count').css({ 'background-color': bgCol, 'font-size': '32px', 'margin-top': "55px", 'margin-left': offset + 'px' }).html(text);
+            }
+        })
+        handsDealt = $('#vars').data('handsdealt'); handsDealt++; $('#vars').data('handsdealt', handsDealt);
+        $('.increaseBet, .decreaseBet').fadeIn('fast');
+    }
+    function contemplateHand(player=0) {
+        //selectedSpeed = parseInt($('#vars').data('selectedspeed'));
+        setTimeout( function() {
+            if (parseInt($('#player'+player).data('handcount'))<17) {   // ask for another card
+                //console.log("Asking for another card");
+                hitMe(player);
+            } else {                                                    // staying
+                //console.log("Staying");
+                showFinalCount(player);
+            }
+        }, 1500)
+    }
+    function doUIStuff() {
+        arrows = $('#vars').data('arrows').split(',');
+        arrowUp = arrows[0]; arrowDown = arrows[1];
+        $('.increaseBet').html(arrowUp); $('.decreaseBet').html(arrowDown);
+    }
+    function fixBase64FileData(data) {
+        replaceArray = {
+            "%1" : "iVBORw0KGgoAAAANSUhEUgAAAVoAAAIR",
+            "%2" : "BAMAAAD5CGh3AAAAA3NCSVQICAjb4U/gAAAA",
+            "%3" : "AAAAJcEhZcwAALfsAAC37AfyHSuc",
+            "%4" : "AAAABXRSTlP/////APu2DlMAAAAJcEhZcwAALfsAAC37AfyHSuc",
+            "%5" : "iVBORw0KGgoAAAANSUhEUgAAAVYAAAIPBAMAAADa6OsSAAAAA3NCSVQICAjb4U/gAAAA",
+            "%6" : "BAMAAAD5CGh3AAAAA3NCSVQICAjb4U/gAAAAD1BMVEX/AAD///8WFvi",
+            "%7" : "BAMAAAD5CGh3AAAAA3NCSVQICAjb4U/gAAAAD1BMVEUAAAD///8WFviqqqoAAP89MAbsAAAABXRSTlP/////APu2DlMAAAAJcEhZcwAALfsAAC37AfyHSuc",
+            "%8" : "BAMAAAD5CGh3AAAAA3NCSVQICAjb4U/gAAAAD1BMVEUAAAD///8WFvirq6gAAP9hBTRyAAAABXRSTlP/////APu2DlMAAAAJcEhZcwAALfsAAC37AfyHSuc",
+            "%9" : "AAAACXRSTlP//////////wBTT3gSAAAACXBIWXMAAC37AAAt+wH8h0rnAAAAHHRFWHRTb2Z0d2FyZQBBZG9iZSBGaXJld29ya3MgQ1M26LyyjAAAIABJREFUeJztn",
+            "%A" : "AAAAcdEVYdFNvZnR3YXJlAEFkb2JlIEZpcmV3b3JrcyBDUzbovLKMAAA",
+            "%B" : "iVBORw0KGgoAAAANSUhEUgAAAVoAAAIQBAMAAAAyVLvSAAAAA3NCSVQICAjb4U/gAAAA"
+        }
+        $.each(replaceArray, function( key, value) {
+            if (data.search(key) != -1) {
+                console.log("shit found, replacing");
+                data = data.replace(key, value);
+            }
+        })
+
+        return data;
+    }
+    function getEmotion(score) {
+        switch (true) {
+            case (score<1):                 face = $('#vars').data('emotion_bust');         break;
+            case (score<12):                face = $('#vars').data('emotion_uncertain');    break;
+            case (score<17):                face = $('#vars').data('emotion_worried');      break;
+            case (score>=17 && score<20):   face = $('#vars').data('emotion_smile');        break;
+            case (score==20):               face = $('#vars').data('emotion_confident');    break;
+            case (score==21):               face = $('#vars').data('emotion_blackjack');    break;
+            case (score>21):                face = $('#vars').data('emotion_bust');         break;
+        }
+        return face;
+    }
+    function getPlayerBalance(player) {
+        if (player<4) {
+            playersBalance = parseInt($('#player'+player+' .balance').html());
+            playerBet = parseInt($('#player'+player+' .balanceContainer').data('currentbet'));
+            playersBalance -= playerBet;
+            playerFace = $('#player'+player+' .playerTitle').html().split(' ');
+            playerFace = playerFace[0];
+            $('.playerFace').html(playerFace);
+            $('#player'+player+' .balance').html(playersBalance);
+            $('#playersBet').html(playerBet);
+        }
+    }
+    function hitMe(player, timeOut=500) {
+        $('#newCard').get(0).play();
+        cards = parseInt($('#player'+player+' .card').length);
+        if (cards<5) {
+            aceCount = 0;
+            cardsLeftArray = $('#vars').data('cardsleft').split(',');
+            playersCard = cardsLeftArray.shift();
+            // update cards left var
+            cardsLeft = cardsLeftArray.join(',');
+            $('#vars').data('cardsleft', cardsLeft);
+            // update used cards var
+            usedCards = $('#vars').data('usedcards') + ',' + playersCard;
+            $('#vars').data('usedcards', usedCards);
+
+            // convert card to something we can use
+            playersCardArray = playersCard.split('-');
+            cardValue = parseInt(playersCardArray[0]);
+            cardSuit = playersCardArray[1];
+            if (cardValue>10 || cardValue == 1) {
+                switch (cardValue) {
+                    case  1: cardValue = "A"; handCount = 11; break;
+                    case 11: cardValue = "J"; handCount = 10; break;
+                    case 12: cardValue = "Q"; handCount = 10; break;
+                    case 13: cardValue = "K"; handCount = 10; break;
+                }
+            } else {
+                handCount = cardValue;
+            }
+            image = cardValue + cardSuit;
+            // update the players hand
+            playersHand = $('#player'+player).data('hand') + ',' + image;
+            $('#player'+player).data('hand', playersHand)
+
+            // show the new card
+            $('#player'+player).append('<div class="card' + (cards+1) + ' card" data-count="' + handCount + '"></div>');
+            leftOffset = -85;
+            cardImg = $('#images').data('card'+image.toLowerCase());
+            $('#player'+player+' .card'+(cards+1)).css({ 'margin-left': leftOffset + 'px', 'background-image': 'url("' + cardImg + '")', 'border': '1px solid black' })
+
+            // figure out if the player is bust or not
+            playersAceCount=0; totalCount=0;
+            $('#player'+player+' .card').each( function() {
+                thisCount = $(this).data('count');
+                if (thisCount==11) { playersAceCount++; }
+                totalCount += thisCount;
+            })
+
+            if (playersAceCount>0 && totalCount>21) {
+                // player current calculation is greater than 21, but they have aces
+                while (playersAceCount>0 && totalCount>21) {
+                    totalCount -= 10;
+                    playersAceCount--;
+                }
+            }
+            $('#player'+player).data('handcount', totalCount);
+            if (totalCount>21) {
+                face = $('#vars').data('emotion_bust');
+                $('#player'+player+' .face').html(face);
+                showFinalCount(player);
+            } else {
+                face = getEmotion(totalCount);
+                $('#player'+player+' .face').html(face);
+                if (player!=$('#vars').data('humanplayer')) {
+                    contemplateHand(player);
+                }
+            }
+        } else {
+            showFinalCount(player);
+        }
+        setTimeout( function() {
+
+        }, timeOut)
+    }
+    function humanDefaultBet() {
+        $('.playerFace').html(' ');
+        humanPlayer = parseInt($('#vars').data('humanplayer'));
+        playersBalance = parseInt($('#player'+humanPlayer+' .balance').html());
+        playersBet = parseInt($('#player'+humanPlayer+' .balanceContainer').data('currentbet'));
+        if (playersBalance - playersBet >= 0) {
+            playersBalance -= playersBet;
+            $('.playersBet').html(playersBet);
+            $('#player'+player+' .balance').html(playersBalance);
+            $('#player'+player+' .balanceContainer').data('currentbet', playersBet);
+            $('.playersBet').html(playersBet);
+        } else {
+            if (playersBalance>0) {
+                $('#player'+player+' .balanceContainer').data('currentbet', playersBet);
+                $('#player'+player+' .balance').html(0);
+                $('.playersBet').html(playersBet);
+            } else { 
+                // youre outta money bitch! game over.
+            }
+        }
+    }
+    function newHand() {
+        $('.increaseBet, .decreaseBet').fadeOut('fast');
+        if ($('.card').length>4) { humanDefaultBet(); }
+        $('.count').remove(); $('.card').remove(); $('.face').html('😐');
+        $('#vars').data('currenthighscore',0).data('dealerscore',0).data('dealerbust',"no").data('currentplayer',0).data('handsdealt',0);
+        
+        player=0;
+        // THIS CODE ALREADY KIND OF EXISTS IN BEGIN() BUT ITS HELLA MESSY AS IT WAS MODIFIED A MILLION TIMES BEFORE V1.0 SO IM REWRITING IT HERE
+        for (counter=0; counter<8; counter++) {
+            timeOut = parseInt($('#vars').data('selectedspeed')) * counter;
+            setTimeout( function(passedCounter=0) {
+                if (passedCounter>0 && passedCounter%2==0) { player++; } // new player?
+                if (passedCounter%2==0) { card=1; offset=0; doCardCount=false; } else { card=2; offset=-85; doCardCount=true; } // card 1 or 2
+
+                cardsArray = $('#vars').data('cardsleft').split(','); // get the cards that are left
+                playersCard = cardsArray.shift(); // players card
+                $('#vars').data('cardsleft', cardsArray.join(',')); // remove card from cards left
+                usedCardsList = $('#vars').data('usedcards') + ',' + playersCard; $('#vars').data('usedcards', usedCardsList); // get used cards list and add player card to it
+                
+                playersCardArray = playersCard.split('-');
+                playersCardValue = parseInt(playersCardArray[0]); cardSuit = playersCardArray[1]; // card num and suit
+                if (playersCardValue>10 || playersCardValue == 1) {
+                    switch (playersCardValue) {
+                        case  1: cardImg = "A"; cardCount = 11; break;
+                        case 11: cardImg = "J"; cardCount = 10; break;
+                        case 12: cardImg = "Q"; cardCount = 10; break;
+                        case 13: cardImg = "K"; cardCount = 10; break;
+                    }
+                } else {
+                    cardImg = cardCount = playersCardValue;
+                }
+
+                image = cardImg.toString() + cardSuit;
+                //console.log("Player: [" + player + "] - Players Card: [" + playersCard + "] Counter: [" + counter + "] - Passed Counter: [" + passedCounter + "] - Time Out: [" + timeOut + "] - Card: [" + card + "] - Offset: [" + offset + "] - Card Image: [" + cardImg + "] - Card Count: [" + cardCount + "]");
+                if (player==3 && card==1) {
+                    cardImg = $('#images').data('card00');
+                    cardHTML = '<div class="card' + card + ' card" data-count="' + cardCount + '" style="background-image: url(\'' + cardImg + '\'); margin-left: ' + offset + 'px; border: 1px solid black;"></div>';
+                } else {
+                    cardImg = $('#images').data('card'+image.toLowerCase());
+                    cardHTML = '<div class="card' + card + ' card" data-count="' + cardCount + '" style="background-image: url(\'' + cardImg + '\'); margin-left: ' + offset + 'px; border: 1px solid black;"></div>';
+                }
+                $('#player'+player).append(cardHTML);
+
+                aceCount=0;
+                if (doCardCount==true) {
+                    card1 = parseInt($('#player' + player + ' .card1').data('count')); if (card1==11) { aceCount++; }
+                    card2 = parseInt($('#player' + player + ' .card2').data('count')); if (card2==11) { aceCount++; }
+
+                    totalCount = card1 + card2;
+                    //console.log("Card 1: " + card1 + " - Card 2: " + card2 + " - Total Count: " + totalCount);
+                    if (aceCount > 0 && totalCount > 21) { totalCount -= 10; } // a loop to test totalCount isn't needed here as these are the first 2 cards dealt to each player and hence a max total can never be more than 22... basically, remove 10 from the totalCount
+                    if (player==3) { $('#vars').data('dealerscore', totalCount); }
+                    face = getEmotion(totalCount);
+                    $('#player'+player+' .face').html(face);
+                    $('#player'+player).data('handcount', totalCount);
+                    hand = $('#player'+player).data('hand') + ',' + image;
+                    $('#player'+player).data('hand', hand);
+                } else {
+                    $('#player'+player).data('hand', image);
+                }
+                
+                if (player==3 && card==2) { nextPlayer(-1); $('#options').fadeIn("slow"); }
+            }, timeOut, counter)
+        }
+    }
+    function nextPlayer(player) {
+        player++;
+        if (player==3) {
+            // turn hole card
+            currentHand = $('#player3').data('hand');
+            currentHandArray = currentHand.split(',');
+            cardImg = $('#images').data('card'+currentHandArray[0].toLowerCase());
+            $('#player3 .card1').css('background-image', 'url("' + cardImg + '")')
+        }
+        $('.player').each( function() { 
+            thisID = $(this).attr('id');
+            $('#'+thisID+' .playerTitle').css('background-color', '#48707E');
+        });
+        $('#player'+player+' .playerTitle').css('background-color', '#902424');
+        if (parseInt($('#vars').data('humanplayer')!=player)) { $('#option').fadeOut(333); }
+        $('#vars').data('currentplayer', player)
+        // position the "hand" options
+        $('#options').css({'transform' : 'translate(' + (player)*342 + 'px)'});
+        if ($('#vars').data('humanplayer')==player) {
+            //console.log("Users Turn");
+        } else {
+            //console.log("Computers Turn...");
+            $('#options').fadeOut("fast");
+            getPlayerBalance(player);
+            contemplateHand(player);
+        }
+    }
+    function setBalance(playerID, type) {
+        balance = parseInt($('#'+playerID+' .balance').html());
+        bet = parseInt($('#'+playerID+' .balanceContainer').data('currentbet'))
+        if (type=='WIN') { winnings = bet*2; } else { winnings = bet; }
+        finalBalance = winnings + balance;
+        $('#'+playerID+' .balance').html(finalBalance);
+        $('#'+playerID+' .balanceContainer').data('total', finalBalance);
+    }
+    function showFinalCount(player) {
+        $('.playerFace').html('');
+        handCount = parseInt($('#player'+player).data('handcount'));
+        bust = handCount>21 ? true : false;
+
+        if (player==3) {
+            if (bust==false) { $('#vars').data('dealerscore', handCount); } else { $('#vars').data('dealerscore', 0); handCount=0; }
+        } else {
+            if (bust==true) { handCount=-1; }
+        }
+        $('#player'+player).data('handcount', handCount);
+        if (player > -1 && player < 4) {
+            face = getEmotion(handCount);
+        }
+        // show user score on top of cards
+        if (bust==true) { playerScore='BUST'; fsize=' font-size: 48px;"'; bgCol='#8C0000B3'; } else { playerScore=handCount; fsize=''; bgCol='#00B22DB3'; }
+        scoreHTML='<div class="count" style="background-color: ' + bgCol +';' + fsize + '">' + playerScore + '</div>';
+        $('#player'+player).append(scoreHTML);
+        $('#player'+player+' .face').html(face);
+        if (player<=$('#totalPlayers').val()) {
+            nextPlayer(player);
+        } else {
+            //console.log('All hands dealt. Checking who won...')
+            checkForWinner();
+        }
+        
+    }
+    
+</script>
+</html>
