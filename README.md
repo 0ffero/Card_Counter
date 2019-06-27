@@ -11,7 +11,5 @@ Dealer speeds start at 1 card every 3 seconds all the way to 4 cards a second.
 </p>
 <p>
 TODO:<br/>
-<del>Allow user to hide the count.</del> DONE<br/>
-<del>Allow user to take next 2 cards after counting.</del> DONE<br/>
-Allow user to select how many players at table.
+  NOW CONTAINED IN <a href="https://0ffero.github.io/Card_Counter/" target="_blank">index.html</a>
 </p>
