@@ -426,7 +426,6 @@
         }
         $.each(replaceArray, function( key, value) {
             if (data.search(key) != -1) {
-                console.log("shit found, replacing");
                 data = data.replace(key, value);
             }
         })
